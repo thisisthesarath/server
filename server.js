@@ -38,6 +38,28 @@ app.get('/webapi/core/extension', async (req, res) => {
   }
 });
 
+// PBX API route for users
+app.get('/webapi/core/user', async (req, res) => {
+  try {
+    const response = await fetch(`${process.env.PBX_API_URL}/user`, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_API_USERNAME}:${process.env.PBX_API_PASSWORD}`).toString('base64'), // Basic Auth
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from PBX API: ${response.statusText}`);
+    }
+
+    const data = await response.json(); // Parse the JSON response from PBX
+    res.json(data); // Send the real data to the client (React app)
+  } catch (error) {
+    console.error('Error fetching PBX data:', error.message);
+    res.status(500).json({ message: 'Error fetching PBX data' });
+  }
+});
+
 // PBX API route for call detail records (CDR)
 app.get('/webapi/core/cdr', async (req, res) => {
   try {
