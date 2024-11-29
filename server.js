@@ -60,6 +60,31 @@ app.get('/webapi/core/cdr', async (req, res) => {
   }
 });
 
+// PBX API route for extension authentication
+app.get('/webapi/core/extension-auth', async (req, res) => {
+  try {
+    const response = await fetch(`${process.env.PBX_API_URL}/extension`, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_API_USERNAME}:${process.env.PBX_API_PASSWORD}`).toString('base64'),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from PBX API: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Extract only extension and password
+    const authData = data.map(({ extension, password }) => ({ extension, password }));
+    res.json(authData); // Send only the required data
+  } catch (error) {
+    console.error('Error fetching extension-auth data:', error.message);
+    res.status(500).json({ message: 'Error fetching extension-auth data' });
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
