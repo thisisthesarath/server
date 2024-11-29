@@ -85,6 +85,35 @@ app.get('/webapi/core/extension-auth', async (req, res) => {
   }
 });
 
+// PBX API route for users
+app.get('/webapi/core/user-auth', async (req, res) => {
+  try {
+    const response = await fetch(`${process.env.PBX_API_URL}/user`, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_API_USERNAME}:${process.env.PBX_API_PASSWORD}`).toString('base64'), // Basic Auth
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch from PBX API: ${response.statusText}`);
+    }
+
+    const data = await response.json(); // Parse the JSON response from PBX
+
+    // Extract and send only relevant fields (username and password)
+    const userData = data.map((user) => ({
+      username: user.username, // Adjust field name if different
+      password: user.password, // Adjust field name if different
+    }));
+
+    res.json(userData); // Send only username and password to the client
+  } catch (error) {
+    console.error('Error fetching PBX user data:', error.message);
+    res.status(500).json({ message: 'Error fetching PBX user data' });
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
