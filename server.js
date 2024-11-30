@@ -136,6 +136,113 @@ app.get('/webapi/core/user-auth', async (req, res) => {
   }
 });
 
+// Route to create a new user
+app.post('/webapi/core/user/create', async (req, res) => {
+  try {
+    const userData = req.body; // Get user data from the request body
+
+    // Validate required fields
+    const requiredFields = ['username', 'password', 'email', 'language', 'timezone', 'first_name', 'last_name', 'organization', 'user_groups', 'domain'];
+    const missingFields = requiredFields.filter((field) => !userData[field]);
+    if (missingFields.length > 0) {
+      return res.status(400).json({ message: `Missing required fields: ${missingFields.join(', ')}` });
+    }
+
+    const response = await fetch(`${process.env.PBX_API_URL}/webapi/core/user/create.php`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_USERNAME}:${process.env.PBX_PASSWORD}`).toString('base64'), // Basic Auth
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData), // Send user data
+    });
+
+    const rawResponse = await response.text();
+    console.log('Raw User Creation Response:', rawResponse);
+
+    try {
+      const apiResponse = JSON.parse(rawResponse); // Try parsing it as JSON
+      if (!response.ok) {
+        console.error('API response error:', apiResponse);
+        return res.status(response.status).json({
+          message: apiResponse.message || 'Failed to create user on PBX.',
+        });
+      }
+
+      res.status(200).json(apiResponse); // Return successful response to the client
+    } catch (parseError) {
+      console.error('Error parsing response as JSON:', parseError);
+      return res.status(500).json({ message: 'Failed to parse response from PBX API.' });
+    }
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
+// Route to create an extension
+app.post('/webapi/core/extension/create', async (req, res) => {
+  try {
+    const extensionData = req.body;
+
+    const requiredFields = [
+      'extension',
+      'user',
+      'voicemail_password',
+      'account_code',
+      'outbound_caller_id_name',
+      'outbound_caller_id_number',
+      'effective_caller_id_name',
+      'effective_caller_id_number',
+      'emergency_caller_id_name',
+      'emergency_caller_id_number',
+      'max_registrations',
+      'limit_max',
+      'user_record',
+      'domain',
+      'context',
+      'description',
+      'extension_enabled',
+    ];
+
+    const missingFields = requiredFields.filter((field) => !extensionData[field]);
+    if (missingFields.length > 0) {
+      console.error('Missing fields:', missingFields);
+      return res.status(400).json({ message: `Missing required fields: ${missingFields.join(', ')}` });
+    }
+
+    const response = await fetch(`${process.env.PBX_API_URL}/webapi/core/extension/create.php`, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_USERNAME}:${process.env.PBX_PASSWORD}`).toString('base64'),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(extensionData),
+    });
+
+    const rawResponse = await response.text();
+    console.log('Raw Extension Creation Response:', rawResponse);
+
+    try {
+      const apiResponse = JSON.parse(rawResponse); // Try parsing it as JSON
+      if (!response.ok) {
+        console.error('API response error:', apiResponse);
+        return res.status(response.status).json({
+          message: apiResponse.message || 'Failed to create extension on PBX.',
+        });
+      }
+
+      res.status(200).json(apiResponse);
+    } catch (parseError) {
+      console.error('Error parsing response as JSON:', parseError);
+      return res.status(500).json({ message: 'Failed to parse response from PBX API.' });
+    }
+  } catch (error) {
+    console.error('Error creating extension:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
