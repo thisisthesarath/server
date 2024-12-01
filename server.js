@@ -42,7 +42,7 @@ app.get('/webapi/core/extension', async (req, res) => {
   }
 });
 
-app.post('/webapi/core/user/create.php', async (req, res) => {
+app.post('/webapi/core/user/create', async (req, res) => {
   try {
     const userData = req.body;
     const response = await fetch(`${process.env.PBX_API_URL}/webapi/core/user/create.php`, {
@@ -76,7 +76,7 @@ app.post('/webapi/core/user/create.php', async (req, res) => {
 
 
 // Create extension
-app.post('/webapi/core/extension/create.php', async (req, res) => {
+app.post('/webapi/core/extension/create', async (req, res) => {
   try {
     const extensionData = req.body;
 
