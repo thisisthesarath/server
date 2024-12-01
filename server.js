@@ -136,36 +136,47 @@ app.get('/webapi/core/user-auth', async (req, res) => {
   }
 });
 
-// User creation API route
+// PBX API route for user creation
 app.post('/webapi/core/user/create', async (req, res) => {
   try {
-    const userData = req.body;
+    const userData = req.body; // Get user data from the request body
 
     // Validate required fields
     const requiredFields = ['username', 'password', 'email', 'language', 'timezone', 'first_name', 'last_name', 'organization', 'user_groups', 'domain'];
     const missingFields = requiredFields.filter((field) => !userData[field]);
-    if (missingFields.length > 0) return res.status(400).json({ message: `Missing required fields: ${missingFields.join(', ')}` });
+    if (missingFields.length > 0) {
+      return res.status(400).json({ message: `Missing required fields: ${missingFields.join(', ')}` });
+    }
 
     const response = await fetch(`${process.env.PBX_API_URL}/user/create.php`, {
       method: 'POST',
       headers: {
-        'Authorization': createAuthHeader(),
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_API_USERNAME}:${process.env.PBX_API_PASSWORD}`).toString('base64'), // Basic Auth
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(userData),
+      body: JSON.stringify(userData), // Send user data
     });
 
-    const rawResponse = await response.text();
+    const rawResponse = await response.text(); // Get raw response as text
     console.log('Raw User Creation Response:', rawResponse);
 
     try {
+      // Try parsing the response as JSON
       const apiResponse = JSON.parse(rawResponse);
-      if (!response.ok) return res.status(response.status).json({ message: apiResponse.message || 'Failed to create user on PBX.' });
+      if (!response.ok) {
+        console.error('API response error:', apiResponse);
+        return res.status(response.status).json({
+          message: apiResponse.message || 'Failed to create user on PBX.',
+        });
+      }
 
-      res.status(200).json(apiResponse);
+      res.status(200).json(apiResponse); // Return successful response to the client
     } catch (parseError) {
+      // If parsing fails, log and return the raw response
       console.error('Error parsing response as JSON:', parseError);
-      return res.status(500).json({ message: 'Failed to parse response from PBX API. Raw response: ' + rawResponse });
+      return res.status(500).json({
+        message: 'Failed to parse response from PBX API. Raw response: ' + rawResponse,
+      });
     }
   } catch (error) {
     console.error('Error creating user:', error);
@@ -173,20 +184,41 @@ app.post('/webapi/core/user/create', async (req, res) => {
   }
 });
 
-// Extension creation API route
+// PBX API route for extensions
 app.post('/webapi/core/extension/create', async (req, res) => {
   try {
     const extensionData = req.body;
 
-    // Validate required fields
-    const requiredFields = ['extension', 'user', 'voicemail_password', 'account_code', 'outbound_caller_id_name', 'outbound_caller_id_number', 'effective_caller_id_name', 'effective_caller_id_number', 'emergency_caller_id_name', 'emergency_caller_id_number', 'max_registrations', 'limit_max', 'user_record', 'domain', 'context', 'description', 'extension_enabled'];
+    const requiredFields = [
+      'extension',
+      'user',
+      'voicemail_password',
+      'account_code',
+      'outbound_caller_id_name',
+      'outbound_caller_id_number',
+      'effective_caller_id_name',
+      'effective_caller_id_number',
+      'emergency_caller_id_name',
+      'emergency_caller_id_number',
+      'max_registrations',
+      'limit_max',
+      'user_record',
+      'domain',
+      'context',
+      'description',
+      'extension_enabled',
+    ];
+
     const missingFields = requiredFields.filter((field) => !extensionData[field]);
-    if (missingFields.length > 0) return res.status(400).json({ message: `Missing required fields: ${missingFields.join(', ')}` });
+    if (missingFields.length > 0) {
+      console.error('Missing fields:', missingFields);
+      return res.status(400).json({ message: `Missing required fields: ${missingFields.join(', ')}` });
+    }
 
     const response = await fetch(`${process.env.PBX_API_URL}/webapi/core/extension/create.php`, {
       method: 'POST',
       headers: {
-        'Authorization': createAuthHeader(),
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_API_USERNAME}:${process.env.PBX_API_PASSWORD}`).toString('base64'),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(extensionData),
@@ -196,13 +228,20 @@ app.post('/webapi/core/extension/create', async (req, res) => {
     console.log('Raw Extension Creation Response:', rawResponse);
 
     try {
-      const apiResponse = JSON.parse(rawResponse);
-      if (!response.ok) return res.status(response.status).json({ message: apiResponse.message || 'Failed to create extension on PBX.' });
+      const apiResponse = JSON.parse(rawResponse); // Try parsing it as JSON
+      if (!response.ok) {
+        console.error('API response error:', apiResponse);
+        return res.status(response.status).json({
+          message: apiResponse.message || 'Failed to create extension on PBX.',
+        });
+      }
 
-      res.status(200).json(apiResponse);
+      res.status(200).json(apiResponse); // Return successful response to the client
     } catch (parseError) {
       console.error('Error parsing response as JSON:', parseError);
-      return res.status(500).json({ message: 'Failed to parse response from PBX API. Raw response: ' + rawResponse });
+      return res.status(500).json({
+        message: 'Failed to parse response from PBX API. Raw response: ' + rawResponse,
+      });
     }
   } catch (error) {
     console.error('Error creating extension:', error);
