@@ -136,7 +136,7 @@ app.get('/webapi/core/user-auth', async (req, res) => {
   }
 });
 
-// Route to create a new user
+// PBX API route for user creation
 app.post('/webapi/core/user/create', async (req, res) => {
   try {
     const userData = req.body; // Get user data from the request body
@@ -148,20 +148,21 @@ app.post('/webapi/core/user/create', async (req, res) => {
       return res.status(400).json({ message: `Missing required fields: ${missingFields.join(', ')}` });
     }
 
-    const response = await fetch(`${process.env.PBX_API_URL}/webapi/core/user/create.php`, {
+    const response = await fetch(`${process.env.PBX_API_URL}/user/create.php`, {
       method: 'POST',
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_USERNAME}:${process.env.PBX_PASSWORD}`).toString('base64'), // Basic Auth
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_API_USERNAME}:${process.env.PBX_API_PASSWORD}`).toString('base64'), // Basic Auth
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(userData), // Send user data
     });
 
-    const rawResponse = await response.text();
+    const rawResponse = await response.text(); // Get raw response as text
     console.log('Raw User Creation Response:', rawResponse);
 
     try {
-      const apiResponse = JSON.parse(rawResponse); // Try parsing it as JSON
+      // Try parsing the response as JSON
+      const apiResponse = JSON.parse(rawResponse);
       if (!response.ok) {
         console.error('API response error:', apiResponse);
         return res.status(response.status).json({
@@ -171,8 +172,11 @@ app.post('/webapi/core/user/create', async (req, res) => {
 
       res.status(200).json(apiResponse); // Return successful response to the client
     } catch (parseError) {
+      // If parsing fails, log and return the raw response
       console.error('Error parsing response as JSON:', parseError);
-      return res.status(500).json({ message: 'Failed to parse response from PBX API.' });
+      return res.status(500).json({
+        message: 'Failed to parse response from PBX API. Raw response: ' + rawResponse,
+      });
     }
   } catch (error) {
     console.error('Error creating user:', error);
@@ -180,7 +184,7 @@ app.post('/webapi/core/user/create', async (req, res) => {
   }
 });
 
-// Route to create an extension
+// PBX API route for extensions
 app.post('/webapi/core/extension/create', async (req, res) => {
   try {
     const extensionData = req.body;
@@ -214,7 +218,7 @@ app.post('/webapi/core/extension/create', async (req, res) => {
     const response = await fetch(`${process.env.PBX_API_URL}/webapi/core/extension/create.php`, {
       method: 'POST',
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_USERNAME}:${process.env.PBX_PASSWORD}`).toString('base64'),
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_API_USERNAME}:${process.env.PBX_API_PASSWORD}`).toString('base64'),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(extensionData),
@@ -232,10 +236,12 @@ app.post('/webapi/core/extension/create', async (req, res) => {
         });
       }
 
-      res.status(200).json(apiResponse);
+      res.status(200).json(apiResponse); // Return successful response to the client
     } catch (parseError) {
       console.error('Error parsing response as JSON:', parseError);
-      return res.status(500).json({ message: 'Failed to parse response from PBX API.' });
+      return res.status(500).json({
+        message: 'Failed to parse response from PBX API. Raw response: ' + rawResponse,
+      });
     }
   } catch (error) {
     console.error('Error creating extension:', error);
@@ -243,6 +249,7 @@ app.post('/webapi/core/extension/create', async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server is running on port ${port}`);
 });
