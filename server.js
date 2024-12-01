@@ -43,7 +43,7 @@ app.get('/webapi/core/extension', async (req, res) => {
 });
 
 // Create user
-app.post('/webapi/core/user/create', async (req, res) => {
+app.post('/webapi/core/user/create.php', async (req, res) => {
   try {
     const userData = req.body;
 
@@ -81,7 +81,7 @@ app.post('/webapi/core/user/create', async (req, res) => {
 });
 
 // Create extension
-app.post('/webapi/core/extension/create', async (req, res) => {
+app.post('/webapi/core/extension/create.php', async (req, res) => {
   try {
     const extensionData = req.body;
 
