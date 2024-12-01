@@ -227,22 +227,6 @@ app.post('/webapi/core/extension/create', async (req, res) => {
     const rawResponse = await response.text();
     console.log('Raw Extension Creation Response:', rawResponse);
 
-    try {
-      const apiResponse = JSON.parse(rawResponse); // Try parsing it as JSON
-      if (!response.ok) {
-        console.error('API response error:', apiResponse);
-        return res.status(response.status).json({
-          message: apiResponse.message || 'Failed to create extension on PBX.',
-        });
-      }
-
-      res.status(200).json(apiResponse); // Return successful response to the client
-    } catch (parseError) {
-      console.error('Error parsing response as JSON:', parseError);
-      return res.status(500).json({
-        message: 'Failed to parse response from PBX API. Raw response: ' + rawResponse,
-      });
-    }
   } catch (error) {
     console.error('Error creating extension:', error);
     res.status(500).json({ message: 'Internal server error.' });
