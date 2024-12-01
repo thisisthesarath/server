@@ -42,43 +42,38 @@ app.get('/webapi/core/extension', async (req, res) => {
   }
 });
 
-// Create user
 app.post('/webapi/core/user/create.php', async (req, res) => {
   try {
     const userData = req.body;
-
-    // Validate required fields
-    const requiredFields = ['username', 'password', 'email'];
-    const missingFields = requiredFields.filter((field) => !userData[field]);
-
-    if (missingFields.length) {
-      return res.status(400).json({ message: `Missing fields: ${missingFields.join(', ')}` });
-    }
-
     const response = await fetch(`${process.env.PBX_API_URL}/webapi/core/user/create.php`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: {
+        'Authorization': 'Basic ' + Buffer.from(`${process.env.PBX_API_USERNAME}:${process.env.PBX_API_PASSWORD}`).toString('base64'),
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify(userData),
     });
 
-    const rawResponse = await response.text();
-    console.log('User Creation Response:', rawResponse);
+    const rawResponse = await response.text(); // Read as plain text
+    console.log('Raw User Creation Response:', rawResponse);
+
+    if (!response.ok) {
+      return res.status(response.status).json({ message: 'Error from PBX API', details: rawResponse });
+    }
 
     try {
-      const apiResponse = JSON.parse(rawResponse);
-      if (!response.ok) {
-        return res.status(response.status).json({ message: apiResponse.message || 'Error creating user.' });
-      }
+      const apiResponse = JSON.parse(rawResponse); // Attempt to parse JSON
       res.status(200).json(apiResponse);
     } catch (parseError) {
-      console.error('Error parsing user creation response:', parseError);
-      res.status(500).json({ message: 'Error parsing response from PBX API.' });
+      console.error('Error parsing response as JSON:', parseError.message);
+      res.status(500).json({ message: 'PBX API returned non-JSON response.', details: rawResponse });
     }
   } catch (error) {
-    console.error('Error creating user:', error.message);
-    res.status(500).json({ message: 'Internal server error.' });
+    console.error('Error creating user:', error.stack || error.message);
+    res.status(500).json({ message: 'Internal server error.', error: error.message });
   }
 });
+
 
 // Create extension
 app.post('/webapi/core/extension/create.php', async (req, res) => {
